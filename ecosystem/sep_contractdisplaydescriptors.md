@@ -3,7 +3,7 @@
 ```
 SEP: To Be Assigned
 Title: Contract Display Descriptors
-Author: Jun Luo <@overcat>, <add your name here>
+Author: Jun Luo <@overcat>, Khadim <@KHADEVS>, <add your name here>
 Status: Draft
 Created: 2026-11-02
 Updated: 2026-11-02
@@ -402,7 +402,9 @@ Accepted spec types: `u32`, `i32`, `u64`, `i64`.
 
 The field's `values` object maps the decimal string form of an integer to a
 phrase (subject to the charset rule for labels), e.g.
-`{ "2": "Supply collateral", "4": "Borrow" }`. The matching phrase is
+`{ "2": "Supply collateral", "4": "Borrow" }`. A key is the shortest decimal
+form of its integer: digits with no leading zero, after a `-` for a negative
+value, so `"05"`, `"+5"` and `"-0"` are not keys. The matching phrase is
 displayed. A value with no entry is a check failure (§4.4), because a code the
 curator did not list often changes what the neighbouring arguments mean.
 
@@ -456,7 +458,7 @@ invalid.
 - `true` and `false` are both present if and only if `format` is `bool`, and
   are non-empty and satisfy the charset rule.
 - `values` is present if and only if `format` is `enum`; it has at least one
-  entry, its keys are decimal integer strings and its values are non-empty and
+  entry, its keys have the form §3.6 requires and its values are non-empty and
   satisfy the charset rule.
 - Every field with a `format` has a path whose end type is in that format's
   accepted set, and every `token.path` ends at spec type `address`.
@@ -485,9 +487,10 @@ nodes (§5.2) and to Stellar Asset Contract calls (§5.3).
    If the map has no entry for a member whose spec type is `option`, the
    member's value is taken to be `SCV_VOID`, because [CAP-86] lets a struct
    omit an empty member. A missing member of any other type is a check failure.
-1. If a field's path steps into a `vec` at an index beyond its length, the
-   field is omitted from the described view (it counts toward the omission
-   indication of §5.1) and its token path is not evaluated. A `tuple` or a
+1. If a field's path steps into a `vec` at an index outside it, past its end
+   or, for a negative value, before its start, the field is omitted from the
+   described view (it counts toward the omission indication of §5.1) and its
+   token path is not evaluated. A `tuple` or a
    tuple struct that a path steps into MUST have exactly the number of elements
    its spec declares. Any other traversal failure, including one on a
    `token.path` or on the `auth` path, is a check failure.
@@ -1383,7 +1386,7 @@ input or of a struct member is a string of at most 30 bytes.
         "values": {
           "type": "object",
           "minProperties": 1,
-          "propertyNames": { "pattern": "^-?[0-9]+$" },
+          "propertyNames": { "pattern": "^(0|-?[1-9][0-9]*)$" },
           "additionalProperties": { "$ref": "#/$defs/ascii", "minLength": 1 }
         }
       },
